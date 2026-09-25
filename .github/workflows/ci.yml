@@ -24,19 +24,22 @@ jobs:
           liquibase lpm add liquibase-databricks
           liquibase lpm add databricks-jdbc
 
-      - name: Validate changelog
+      - name: Validate changelogs
         env:
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
           DATABRICKS_HTTP_PATH: ${{ secrets.DATABRICKS_HTTP_PATH }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
           DATABRICKS_CATALOG: ${{ secrets.DATABRICKS_CATALOG }}
         run: |
-          liquibase \
-            --changelog-file=changelog/db.changelog-master.sql \
-            --url="jdbc:databricks://${DATABRICKS_HOST}:443/default;AuthMech=3;httpPath=${DATABRICKS_HTTP_PATH};ConnCatalog=${DATABRICKS_CATALOG};ConnSchema=default;" \
-            --username=token \
-            --password="${DATABRICKS_TOKEN}" \
-            validate
+          for file in changelog/changes/*.sql; do
+            echo "===== Validating $file ====="
+            liquibase \
+              --changelog-file="$file" \
+              --url="jdbc:databricks://${DATABRICKS_HOST}:443/default;AuthMech=3;httpPath=${DATABRICKS_HTTP_PATH};ConnCatalog=${DATABRICKS_CATALOG};ConnSchema=default;" \
+              --username=token \
+              --password="${DATABRICKS_TOKEN}" \
+              validate
+          done
 
       - name: Show pending changesets
         env:
@@ -45,12 +48,15 @@ jobs:
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
           DATABRICKS_CATALOG: ${{ secrets.DATABRICKS_CATALOG }}
         run: |
-          liquibase \
-            --changelog-file=changelog/db.changelog-master.sql \
-            --url="jdbc:databricks://${DATABRICKS_HOST}:443/default;AuthMech=3;httpPath=${DATABRICKS_HTTP_PATH};ConnCatalog=${DATABRICKS_CATALOG};ConnSchema=default;" \
-            --username=token \
-            --password="${DATABRICKS_TOKEN}" \
-            status --verbose
+          for file in changelog/changes/*.sql; do
+            echo "===== Status $file ====="
+            liquibase \
+              --changelog-file="$file" \
+              --url="jdbc:databricks://${DATABRICKS_HOST}:443/default;AuthMech=3;httpPath=${DATABRICKS_HTTP_PATH};ConnCatalog=${DATABRICKS_CATALOG};ConnSchema=default;" \
+              --username=token \
+              --password="${DATABRICKS_TOKEN}" \
+              status --verbose
+          done
 
       - name: Preview SQL
         env:
@@ -59,9 +65,12 @@ jobs:
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
           DATABRICKS_CATALOG: ${{ secrets.DATABRICKS_CATALOG }}
         run: |
-          liquibase \
-            --changelog-file=changelog/db.changelog-master.sql \
-            --url="jdbc:databricks://${DATABRICKS_HOST}:443/default;AuthMech=3;httpPath=${DATABRICKS_HTTP_PATH};ConnCatalog=${DATABRICKS_CATALOG};ConnSchema=default;" \
-            --username=token \
-            --password="${DATABRICKS_TOKEN}" \
-            update-sql
+          for file in changelog/changes/*.sql; do
+            echo "===== Preview $file ====="
+            liquibase \
+              --changelog-file="$file" \
+              --url="jdbc:databricks://${DATABRICKS_HOST}:443/default;AuthMech=3;httpPath=${DATABRICKS_HTTP_PATH};ConnCatalog=${DATABRICKS_CATALOG};ConnSchema=default;" \
+              --username=token \
+              --password="${DATABRICKS_TOKEN}" \
+              update-sql
+          done
